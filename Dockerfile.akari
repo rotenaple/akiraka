@@ -1,0 +1,43 @@
+# Builds the `akiraka-akari:latest` base image that `Dockerfile` copies the akari
+# binary out of.
+#
+# This file was deleted in the same commit that made the main Dockerfile depend on
+# its output ("Bundle Akari and Akiraka in Docker"), which left the repository
+# unbuildable on a machine that did not already have the image: `FROM
+# akiraka-akari:latest` is not a public image, so a fresh `docker compose build`
+# fails to find it and cannot build it either. It is restored here so the build is
+# reproducible rather than dependent on one machine's Docker cache.
+#
+# Build it before the main image, once, and again only when akari should be updated:
+#
+#   docker build -f Dockerfile.akari -t akiraka-akari:latest .
+#
+# Then the ordinary `docker compose build` finds it.
+#
+# Akari is a third-party SSE client (github.com/merethin/akari), so this clones
+# HEAD rather than a pin. That is deliberate and is the cost of not vendoring it:
+# a rebuild picks up whatever upstream has, which is why this image is built
+# rarely and cached.
+
+# Build stage - clone and build akari from GitHub
+FROM rust:latest as builder
+
+WORKDIR /build
+
+# Clone akari from GitHub and build
+RUN git clone https://github.com/merethin/akari.git . && \
+    cargo build --release
+
+# Runtime stage - use sid-slim to match rust:latest glibc
+FROM debian:sid-slim
+
+RUN apt-get update && \
+    apt-get install -y ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /build/target/release/akari /usr/local/bin/akari
+RUN chmod +x /usr/local/bin/akari
+
+WORKDIR /app
+
+CMD ["akari"]

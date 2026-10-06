@@ -1,0 +1,63 @@
+name: akiraka
+
+services:
+  # Akari, the enricher and the query service in one container.
+  #
+  # The query service runs beside the enricher as a separate process rather than a
+  # second container: a bad query cannot take collection down with it, and the
+  # reader can be restarted without bouncing ingest. One container carries both
+  # because there is nothing to gain from splitting them on one host, and one is
+  # one thing to manage.
+  akiraka:
+    build: .
+    # The published image, so a fresh host can `docker compose pull` instead of
+    # building the Akari toolchain. `build:` stays as the source path; compose
+    # uses the local image if it has one and pulls otherwise.
+    image: ghcr.io/rotenaple/akiraka:latest
+    container_name: akiraka
+    environment:
+      - NS_USER_AGENT=${NS_USER_AGENT}
+      - NS_CAS_URL=${NS_CAS_URL:-}
+      - GAPFILL_FILL_ALL=1
+      - GAPFILL_SCAN_START=1
+      - GAPFILL_SCAN_INTERVAL=15
+      # Akari's log rotation, passed to its [output.file]. Empty leaves the value
+      # in the baked config; both settings are documented there and in .env.example.
+      - AKARI_THRESHOLD=${AKARI_THRESHOLD:-}
+      - AKARI_MAXFILES=${AKARI_MAXFILES:-}
+      # Read by docker-entrypoint.sh, which passes it to the enricher. There is no
+      # JSONL output: the store is the record.
+      - EVENT_STORE=/data/events.db
+      # The query service reads that store over HTTP, from this same container.
+      - QUERY_HOST=0.0.0.0
+      - QUERY_PORT=8084
+      # A tripwire for a misconfigured bind, not a security control. The data is
+      # public and the secret is plaintext in .env, so this stops a casual request
+      # to an accidentally-exposed port and nothing more. Real access control is the
+      # bind below.
+      - AKIRAKA_QUERY_TOKEN=${AKIRAKA_QUERY_TOKEN:-}
+      # Unraid runs containers as root, so without these the store, its WAL and
+      # its shm end up owned by root and the array user cannot manage them. Set
+      # both to your Unraid PUID/PGID - 1000/100 by default. Defaults to 0/0, so
+      # nothing changes unless you ask for it. See the entrypoint for why the
+      # switch to non-root is opt-in rather than the default.
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
+    volumes:
+      # akari.toml is deliberately NOT mounted: it is the wiring between Akari and
+      # Akiraka, and its [output.file] path has to be the file Akiraka tails. The
+      # copy in the image is the one that runs, so a host file cannot shadow it and
+      # drift. A mismatch would not error - Akiraka waits for a file to appear - so
+      # the container would look healthy while the store never grew. The entrypoint
+      # checks the two agree anyway.
+      #
+      # endpoints.json IS mounted: it is the one thing a user changes, and editing
+      # it needs the container restarted, not the image rebuilt.
+      - ./data:/data
+      - ./config/endpoints.json:/app/config/endpoints.json:ro
+    ports:
+      # Loopback by default. To reach it from another host, set QUERY_BIND to the
+      # address it should listen on and set AKIRAKA_QUERY_TOKEN, rather than
+      # widening this by default.
+      - "${QUERY_BIND:-127.0.0.1}:${QUERY_PORT:-8084}:8084"
+    restart: unless-stopped

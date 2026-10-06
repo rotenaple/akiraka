@@ -1,0 +1,49 @@
+{
+  "_comment": [
+    "Endpoints served at GET /events/<name>?after_event=<id>&limit=<n>.",
+    "",
+    "Every event is stored. An endpoint is a read-side projection: which",
+    "categories it serves and which fields it returns. The reduction happens on",
+    "the collector, so a reader that wants one category, with a few fields,",
+    "transfers far less than the whole store. A field an event has no value for",
+    "is left out of the response rather than written as null.",
+    "",
+    "`all` below serves everything. To serve a subset, add an endpoint of your",
+    "own - for example:",
+    "",
+    "  \"moves\": {",
+    "    \"categories\": [\"move\"],",
+    "    \"fields\": [\"event\", \"time\", \"actor\", \"origin\", \"destination\"]",
+    "  }",
+    "",
+    "Omit `categories` to serve every category, and `fields` to serve every",
+    "column. Nothing listed here decides what is kept: the store holds every",
+    "category either way, so an endpoint can be added or changed without losing",
+    "anything.",
+    "",
+    "This file is mounted into the query service, not baked into how it works.",
+    "Edit it and restart that one container; nothing needs rebuilding.",
+    "",
+    "A category listed here that the store holds nothing for yields an empty",
+    "result, and the service says so on startup rather than leaving you to",
+    "wonder whether none have happened.",
+    "",
+    "max_rows caps one response. Clients page with after_event=<highest event",
+    "received>, which is exclusive, so a row is never returned twice. The",
+    "x-akiraka-last-event header carries that cursor, so a client need not parse",
+    "the body to find it.",
+    "",
+    "Set AKIRAKA_QUERY_TOKEN to require a bearer token on every request but",
+    "/health. Do that before binding anywhere but loopback.",
+    "",
+    "Delete this file to fall back to the built-in `all` endpoint."
+  ],
+
+  "endpoints": {
+    "all": {
+      "_comment": "The whole store, in event-id order. Categories are omitted so every one is served. The bulky `data` field is not served here: the event columns are what a reader needs to keep its own copy current, and `data` is much the largest thing in the store. max_rows is high because that is the point of this endpoint - a full catch-up at the 10000 default would be thousands of requests.",
+      "fields": ["event", "time", "category", "actor", "receptor", "origin", "destination", "law_issue_id", "law_option"],
+      "max_rows": 100000
+    }
+  }
+}

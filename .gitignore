@@ -1,0 +1,17 @@
+# Runtime data, not tracked - except the issue cache, which is required to build
+# (the Dockerfile copies it in) and to enrich anything at all. A checkout without
+# it cannot start, so it is tracked despite living under data/.
+/data/*
+!/data/issues_cache.txt
+/akari
+*.log
+*.gz
+.env
+
+# Retired data, kept rather than deleted.
+/old/
+
+# Node.js
+node_modules/
+dist/
+*.tsbuildinfo

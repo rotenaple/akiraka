@@ -1,0 +1,38 @@
+{
+  "name": "akiraka",
+  "version": "0.2.0",
+  "description": "Collects, enriches and serves the NationStates happenings stream",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "node -e \"require('fs').rmSync('dist', {recursive:true, force:true})\"",
+    "build:clean": "npm run clean && npm run build",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "test": "node test-enrich.js && node --test test/*.test.mjs",
+    "test:gapfill": "node test/run_gapfill_e2e.mjs",
+    "test:gapfill:live": "node test/run_gapfill_e2e.mjs gapfill_live.test.mjs",
+    "store:stats": "node dist/store_stats.js",
+    "ingest:csv": "node dist/ingest_csv.js"
+  },
+  "keywords": [
+    "nationstates",
+    "akari",
+    "akiraka",
+    "happenings",
+    "enricher"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "he": "^1.2.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/he": "^1.2.3",
+    "@types/node": "^24.19.1",
+    "@types/node-fetch": "^2.6.9",
+    "typescript": "^5.3.3"
+  }
+}

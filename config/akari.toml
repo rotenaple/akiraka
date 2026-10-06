@@ -1,0 +1,40 @@
+# Akari configuration for Akiraka.
+#
+# This file is baked into the image and is not mounted, so it is what runs and a
+# copy on the host has no effect. The [output.file] path below is the file Akiraka
+# tails; the entrypoint refuses to start if the two ever disagree, because a
+# mismatched pair would leave Akiraka waiting for a file nothing writes.
+# File output is the stream Akiraka tails and enriches.
+
+[input]
+# Listen to all NationStates happenings
+url = "https://www.nationstates.net/api/all"
+workers = 2
+
+[output.console]
+# Disable console output in production
+enabled = false
+
+[output.file]
+# The raw stream Akiraka tails.
+enabled = true
+path = "/data/akari_events.jsonl"
+# Akari rotates this file and gzips the segments. threshold is in thousands of
+# lines, so 500 means a segment every 500,000 events; maxfiles is how many
+# segments are kept before the oldest are deleted. Akari's defaults are 500 lines
+# and no limit at all, which is why an unset maxfiles grows without bound.
+# Both are overridable per host with AKARI_THRESHOLD / AKARI_MAXFILES.
+threshold = 500
+maxfiles = 168
+
+[output.redis]
+# Disable Redis
+enabled = false
+
+[output.postgres]
+# Disable Postgres
+enabled = false
+
+[output.rmq]
+# Disable RabbitMQ - using direct file output instead
+enabled = false

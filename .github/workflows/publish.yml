@@ -1,0 +1,49 @@
+name: publish image
+
+# Builds the akiraka image and pushes it to GHCR, so a fresh host can
+# `docker compose pull` instead of installing Go and Rust and building Akari.
+#
+# Tag a release to publish a version alongside latest:
+#
+#   git tag v1.0 && git push origin v1.0
+#
+# The image is built in two stages because Dockerfile copies the Akari binary out
+# of a base image (Dockerfile.akari); that base is built first and stays local -
+# the pushed image is self-contained.
+#
+# The package is private by default even for a public repository. To let anyone
+# pull it, set the package's visibility to public once, under
+# Packages -> akiraka -> Package settings.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the Akari base image
+        run: docker build -f Dockerfile.akari -t akiraka-akari:latest .
+
+      - name: Build akiraka
+        run: docker build -t "ghcr.io/${{ github.repository }}:latest" .
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push latest
+        run: docker push "ghcr.io/${{ github.repository }}:latest"
+
+      - name: Push the version tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          docker tag "ghcr.io/${{ github.repository }}:latest" "ghcr.io/${{ github.repository }}:${{ github.ref_name }}"
+          docker push "ghcr.io/${{ github.repository }}:${{ github.ref_name }}"

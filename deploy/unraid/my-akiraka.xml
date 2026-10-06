@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!--
+  Unraid Docker template for akiraka. Drop it in
+  /boot/config/plugins/dockerMan/templates-user/ and it appears under
+  Docker -> Add Container.
+-->
+<Container version="2">
+  <Name>akiraka</Name>
+  <Repository>ghcr.io/rotenaple/akiraka:latest</Repository>
+  <Registry>https://github.com/rotenaple/akiraka/pkgs/container/akiraka</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/rotenaple/akiraka/issues</Support>
+  <Project>https://github.com/rotenaple/akiraka</Project>
+  <ReadMe/>
+  <Overview>Collects the NationStates happenings stream, enriches it, stores it in SQLite, and serves it over HTTP. Akari, the enricher and the query service run in one container.&#13;&#13;NS_USER_AGENT is required (your NationStates nation name).</Overview>
+  <Category>Tools:Utilities Network:Web</Category>
+  <WebUI>http://[IP]:[PORT:8084]/</WebUI>
+  <TemplateURL/>
+  <Icon/>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="Query port" Target="8084" Default="8084" Mode="tcp" Description="HTTP query port" Type="Port" Display="always" Required="false" Mask="false">8084</Config>
+  <Config Name="NS_USER_AGENT" Target="NS_USER_AGENT" Default="" Mode="" Description="Your NationStates nation name (required)" Type="Variable" Display="always" Required="true" Mask="false"></Config>
+  <Config Name="AKIRAKA_QUERY_TOKEN" Target="AKIRAKA_QUERY_TOKEN" Default="" Mode="" Description="Bearer token for the query service. A misconfiguration tripwire, not a security boundary." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="NS_CAS_URL" Target="NS_CAS_URL" Default="" Mode="" Description="Optional shared-quota server; unset uses the built-in pacer" Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Data" Target="/data" Default="" Mode="rw" Description="Store, raw log and gap state. Use a cache or disk path - SQLite locking is unreliable on /mnt/user (FUSE)." Type="Path" Display="always" Required="true" Mask="false">/mnt/cache/appdata/akiraka/data</Config>
+  <Config Name="Endpoints config" Target="/app/config/endpoints.json" Default="" Mode="ro" Description="Query endpoint definitions" Type="Path" Display="always" Required="false" Mask="false">/mnt/cache/appdata/akiraka/config/endpoints.json</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User id to run as (Unraid array user)" Type="Variable" Display="always" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group id to run as (Unraid array group)" Type="Variable" Display="always" Required="false" Mask="false">100</Config>
+  <Config Name="QUERY_HOST" Target="QUERY_HOST" Default="0.0.0.0" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">0.0.0.0</Config>
+  <Config Name="QUERY_PORT" Target="QUERY_PORT" Default="8084" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">8084</Config>
+  <Config Name="EVENT_STORE" Target="EVENT_STORE" Default="/data/events.db" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">/data/events.db</Config>
+</Container>

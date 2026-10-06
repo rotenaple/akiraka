@@ -1,0 +1,12 @@
+target/
+data/*
+!data/issues_cache.txt
+.git/
+.gitignore
+*.log
+*.gz
+*.md
+docker-compose.yml
+.env
+dist/
+node_modules/
